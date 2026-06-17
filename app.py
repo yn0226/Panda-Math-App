@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 
+#初期化---------
 #総正解数
 if "total_correct" not in st.session_state:
     st.session_state.total_correct = 0
@@ -23,6 +24,18 @@ if "new_reward" not in st.session_state:
 if "mistakes" not in st.session_state:
     st.session_state.mistakes = []
 
+#テンキー用
+if "answer_text" not in st.session_state:
+    st.session_state.answer_text = ""
+if "message" not in st.session_state:
+    st.session_state.message = ""
+
+#パンダランダム取得用
+if "owned_rewards" not in st.session_state:
+    st.session_state.owned_rewards = []
+if "swat_unlocked" not in st.session_state:
+    st.session_state.swat_unlocked = False
+
 
 #タイトル
 #st.title("🐼 パンダけいさんランド 🐼")
@@ -34,8 +47,76 @@ st.caption("🐼 パンダをあつめながら けいさんれんしゅう！")
 
 mode = st.selectbox(
     "れんしゅうする計算をえらんでね",
-    ["きほん", "くり上がり・くり下がり", "九九"]
+    ["きほん", "くり上がり・くり下がり", "九九", "にがて復習"]
 )
+
+#ごほうび一覧
+reward_list = {
+    "normal": {
+        "name": "ノーマルパンダ",
+        "image": "images/normal_panda.png"
+    },
+    "bamboo": {
+        "name": "笹パンダ",
+        "image": "images/bamboo_panda.png"
+    },
+    "king": {
+        "name": "王様パンダ",
+        "image": "images/king_panda.png"
+    },
+    "space": {
+        "name": "宇宙飛行士パンダ",
+        "image": "images/space_panda.png"
+    },
+    "fire": {
+        "name": "消防士パンダ",
+        "image": "images/firefighter_panda.png"
+    },
+    "army": {
+        "name": "自衛隊パンダ",
+        "image": "images/army_panda.png"
+    },
+    "lesser": {
+        "name": "レッサーパンダ",
+        "image": "images/red_panda.png"
+    },
+    "lesser_costume": {
+        "name": "レッサーパンダの着ぐるみパンダ",
+        "image": "images/red_panda_costume.png"
+    },
+    "police": {
+        "name": "警察パンダ",
+        "image": "images/police_panda.png"
+    },
+    "whitebike": {
+        "name": "白バイパンダ",
+        "image": "images/whitebike_panda.png"
+    },
+    "patrolcar": {
+        "name": "パトカーパンダ",
+        "image": "images/patrolcar_panda.png"
+    },
+    "coastguard": {
+        "name": "海上保安庁パンダ",
+        "image": "images/coastguard_panda.png"
+    },
+    "doctor": {
+        "name": "お医者さんパンダ",
+        "image": "images/doctor_panda.png"
+    },    
+    "artist": {
+        "name": "画家パンダ",
+        "image": "images/artist_panda.png"
+    },        
+}
+#シークレットリスト
+secret_reward_list = {
+    "swat": {
+        "name": "スワットパンダ",
+        "image": "images/swat_panda.png"
+    }
+}
+
 
 # 正解数表示
 st.subheader(
@@ -56,14 +137,18 @@ def make_question(mode):
         op = random.choice(["+", "-"])
 
         if op == "+":
-            a = random.randint(1, 9)
-            b = random.randint(1, 9)
+            # 繰り上がりなし：答えが9以下
+            a = random.randint(1, 8)
+            b = random.randint(1, 9 - a)
+
             question = f"{a} + {b} = ?"
             correct_answer = a + b
 
         else:
+            # 繰り下がりなし：一桁どうしの引き算
             a = random.randint(1, 9)
             b = random.randint(1, a)
+
             question = f"{a} - {b} = ?"
             correct_answer = a - b
 
@@ -87,6 +172,15 @@ def make_question(mode):
             question = f"{a} - {b} = ?"
             correct_answer = a - b
 
+    elif mode == "にがて復習":
+        if len(st.session_state.mistakes) == 0:
+            question = "にがて問題はまだないよ！"
+            correct_answer = None
+        else:
+            mistake = random.choice(st.session_state.mistakes)
+            question = mistake["question"]
+            correct_answer = mistake["answer"]
+
     else:
         a = random.randint(1, 9)
         b = random.randint(1, 9)
@@ -109,21 +203,15 @@ if st.session_state.current_mode != mode:
     st.rerun()
 
 # ごほうび表示
-if st.session_state.new_reward == 5:
-    st.image("images/panda_05.png", width=350)
-    st.success("🐼 ノーマルパンダゲット！")
+all_rewards = {
+    **reward_list,
+    **secret_reward_list
+}
 
-elif st.session_state.new_reward == 10:
-    st.image("images/panda_10.png", width=350)
-    st.success("🎋 笹パンダゲット！")
-
-elif st.session_state.new_reward == 20:
-    st.image("images/panda_20.png", width=350)
-    st.success("👑 王様パンダゲット！")
-
-elif st.session_state.new_reward == 30:
-    st.image("images/panda_30.png", width=350)
-    st.success("🚀 宇宙飛行士パンダゲット！")
+if st.session_state.new_reward is not None:
+    reward = all_rewards[st.session_state.new_reward]
+    st.image(reward["image"], width=350)
+    st.success(f"🐼 {reward['name']}ゲット！")
 
 #ごほうびパンダをしまう
 if st.session_state.new_reward is not None:
@@ -132,7 +220,8 @@ if st.session_state.new_reward is not None:
         st.rerun()
 
 # 次の目標表示
-goals = [5, 10, 20, 30]
+goals = [5,10,20,30,40,50,60,70,
+ 80,90,100,120,140,160,200]
 
 next_goal = None
 
@@ -164,49 +253,118 @@ st.header(st.session_state.question)
 
 
 #回答判定
-answer = st.number_input(
+answer_text = st.text_input(
     "こたえをいれてね",
-    step=1,
+    st.session_state.answer_text,
     key=f"answer_{st.session_state.input_key}"
 )
 
-if "message" not in st.session_state:
-    st.session_state.message = ""
+#テンキー
+def add_number(num):
+    st.session_state.answer_text += num
+    st.session_state.input_key += 1
 
-button_clicked = st.button("こたえる")
+def clear_answer():
+    st.session_state.answer_text = ""
+    st.session_state.input_key += 1
+
+def backspace_answer():
+    st.session_state.answer_text = st.session_state.answer_text[:-1]
+    st.session_state.input_key += 1
+
+
+row1 = st.columns(5)
+for i, num in enumerate(["1", "2", "3", "4", "5"]):
+    if row1[i].button(num, key=f"btn_{num}"):
+        add_number(num)
+        st.rerun()
+
+row2 = st.columns(5)
+for i, num in enumerate(["6", "7", "8", "9", "0"]):
+    if row2[i].button(num, key=f"btn_{num}"):
+        add_number(num)
+        st.rerun()
+
+row3 = st.columns(3)
+
+if row3[0].button("C", key="btn_clear"):
+    clear_answer()
+    st.rerun()
+
+if row3[1].button("←", key="btn_back"):
+    backspace_answer()
+    st.rerun()
+
+button_clicked = row3[2].button("こたえる", key="btn_answer")
+
 
 feedback_area = st.empty()
 
 if button_clicked:
+    try:
+        answer = int(st.session_state.answer_text)
+    except ValueError:
+        st.session_state.message = "すうじをいれてね！"
+        st.rerun()
+
     if answer == st.session_state.correct_answer:
         st.session_state.total_correct += 1
 
-        #パンダ獲得時だけ表示させる
-        if st.session_state.total_correct == 5:
-            st.session_state.new_reward = 5
-        elif st.session_state.total_correct == 10:
-            st.session_state.new_reward = 10
-        elif st.session_state.total_correct == 20:
-            st.session_state.new_reward = 20
-        elif st.session_state.total_correct == 30:
-            st.session_state.new_reward = 30
+        # にがて復習で正解したら、にがて問題から消す
+        if mode == "にがて復習":
+            solved_mistake = {
+                "question": st.session_state.question,
+                "answer": st.session_state.correct_answer
+            }
 
+            if solved_mistake in st.session_state.mistakes:
+                st.session_state.mistakes.remove(solved_mistake)
+            
+            #にがて復習クリア時にSWATパンダ開放
+            if len(st.session_state.mistakes) == 0 and not st.session_state.swat_unlocked:
+                st.session_state.swat_unlocked = True
+                st.session_state.new_reward = "swat"
+                st.session_state.show_balloons = True
+
+        # 正解時のごほうび判定
+        reward_points = [5, 10, 20, 30, 40, 50, 60, 70]
+
+        if st.session_state.total_correct in reward_points:
+            if st.session_state.total_correct == 5:
+                reward_key = "normal"
+            else:
+                candidates = [
+                    key for key in reward_list.keys()
+                    if key not in st.session_state.owned_rewards
+                    and key != "normal"
+                ]
+
+                if len(candidates) > 0:
+                    reward_key = random.choice(candidates)
+                else:
+                    reward_key = None
+
+            if reward_key is not None:
+                st.session_state.owned_rewards.append(reward_key)
+                st.session_state.new_reward = reward_key
+
+            st.session_state.show_balloons = True
+
+        # 正解後の後処理
+        st.session_state.answer_text = ""
         st.session_state.input_key += 1
-
         st.session_state.message = "せいかい！🐼"
         st.session_state.question, st.session_state.correct_answer = make_question(mode)
 
-        #正解数＝5/10/20/30でバルーン表示
-        if st.session_state.total_correct in [5, 10, 20, 30]:
-            st.session_state.show_balloons = True
-            st.session_state.reward_shown.append(st.session_state.total_correct)
-
         st.rerun()
+
     else:
         st.session_state.message = "もういちど！"
 
-        #不正解保存
-        mistake = f"{st.session_state.question} 正解:{st.session_state.correct_answer}"
+        mistake = {
+            "question": st.session_state.question,
+            "answer": st.session_state.correct_answer
+        }
 
         if mistake not in st.session_state.mistakes:
             st.session_state.mistakes.append(mistake)
@@ -214,22 +372,61 @@ if button_clicked:
 if st.session_state.message == "せいかい！🐼":
     feedback_area.success("せいかい！🐼")
     st.session_state.message = ""
+
 elif st.session_state.message == "もういちど！":
     feedback_area.error("もういちど！")
 
+elif st.session_state.message == "すうじをいれてね！":
+    feedback_area.warning("すうじをいれてね！")
 
-#残数カウント
-remaining = next_goal - st.session_state.total_correct
+
 
 
 
 #パンダ獲得数表示
-st.subheader("🐼 パンダずかん")
+owned_count = len(st.session_state.owned_rewards)
 
-st.write("✅ ノーマルパンダ" if st.session_state.total_correct >= 5 else "⬜ ノーマルパンダ")
-st.write("✅ 笹パンダ" if st.session_state.total_correct >= 10 else "⬜ 笹パンダ")
-st.write("✅ 王様パンダ" if st.session_state.total_correct >= 20 else "⬜ 王様パンダ")
-st.write("✅ 宇宙飛行士パンダ" if st.session_state.total_correct >= 30 else "⬜ 宇宙飛行士パンダ")
+if st.session_state.swat_unlocked:
+    owned_count += 1
+
+st.subheader(
+    f"🐼 パンダずかん ({owned_count}/15)"
+)
+
+cols = st.columns(3)
+
+for i, (key, reward) in enumerate(reward_list.items()):
+    col = cols[i % 3]
+
+    with col:
+        with st.container(border=True):
+            unlocked = key in st.session_state.owned_rewards
+
+            if unlocked:
+                st.image(reward["image"], use_container_width=True)
+                st.write(f"✅ {reward['name']}")
+            else:
+                st.write("⬜ ？？？？")
+
+# シークレット枠
+st.subheader("🔒 シークレットパンダ")
+
+left, center, right = st.columns([1,1,1])
+
+with center:
+    with st.container(border=True):
+
+        if st.session_state.swat_unlocked:
+            reward = secret_reward_list["swat"]
+
+            st.image(
+                reward["image"],
+                use_container_width=True
+            )
+            st.write(f"✅ {reward['name']}")
+        else:
+            st.write("⬜ ？？？？")
+
 
 #不正解表示
 st.subheader("📚 にがて問題")
@@ -238,7 +435,7 @@ if len(st.session_state.mistakes) == 0:
     st.write("まだないよ！")
 else:
     for m in st.session_state.mistakes:
-        st.write("•", m)
+        st.write(f"• {m['question']} 正解:{m['answer']}")
 
 
 #リセットボタン
@@ -246,4 +443,9 @@ if st.button("🔄 はじめから"):
     st.session_state.total_correct = 0
     st.session_state.question, st.session_state.correct_answer = make_question(mode)
     st.session_state.input_key += 1
+    st.session_state.answer_text = ""
+    st.session_state.owned_rewards = []
+    st.session_state.new_reward = None
+    st.session_state.swat_unlocked = False
+    st.session_state.mistakes = []
     st.rerun()
