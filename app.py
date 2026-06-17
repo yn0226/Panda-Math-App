@@ -54,14 +54,20 @@ mode = st.selectbox(
 st.markdown(
     """
     <style>
+    div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+    }
+
     div[data-testid="column"] {
-        width: calc(33.3333% - 1rem) !important;
-        flex: 1 1 calc(33.3333% - 1rem) !important;
-        min-width: calc(33.3333% - 1rem) !important;
+        flex: 1 1 0 !important;
+        width: 33.333% !important;
+        min-width: 0 !important;
     }
 
     div.stButton > button {
-        width: 100%;
+        width: 100% !important;
         height: 56px;
         font-size: 22px;
     }
@@ -69,6 +75,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 #ごほうび一覧
 reward_list = {
