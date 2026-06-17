@@ -221,7 +221,7 @@ if st.session_state.new_reward is not None:
 
 # 次の目標表示
 goals = [5,10,20,30,40,50,60,70,
- 80,90,100,120,140,160,200]
+ 80,90,100,120,140,160]
 
 next_goal = None
 
@@ -273,30 +273,31 @@ def backspace_answer():
     st.session_state.input_key += 1
 
 
-row1 = st.columns(5)
-for i, num in enumerate(["1", "2", "3", "4", "5"]):
-    if row1[i].button(num, key=f"btn_{num}"):
-        add_number(num)
-        st.rerun()
+keypad = [
+    ["1", "2", "3"],
+    ["4", "5", "6"],
+    ["7", "8", "9"],
+    ["C", "0", "←"],
+]
 
-row2 = st.columns(5)
-for i, num in enumerate(["6", "7", "8", "9", "0"]):
-    if row2[i].button(num, key=f"btn_{num}"):
-        add_number(num)
-        st.rerun()
+for row_index, row in enumerate(keypad):
+    cols = st.columns(3)
+    for col_index, label in enumerate(row):
+        with cols[col_index]:
+            if st.button(label, key=f"btn_{row_index}_{col_index}", use_container_width=True):
+                if label == "C":
+                    clear_answer()
+                elif label == "←":
+                    backspace_answer()
+                else:
+                    add_number(label)
+                st.rerun()
 
-row3 = st.columns(3)
-
-if row3[0].button("C", key="btn_clear"):
-    clear_answer()
-    st.rerun()
-
-if row3[1].button("←", key="btn_back"):
-    backspace_answer()
-    st.rerun()
-
-button_clicked = row3[2].button("こたえる", key="btn_answer")
-
+button_clicked = st.button(
+    "こたえる",
+    key="btn_answer",
+    use_container_width=True
+)
 
 feedback_area = st.empty()
 
@@ -327,7 +328,10 @@ if button_clicked:
                 st.session_state.show_balloons = True
 
         # 正解時のごほうび判定
-        reward_points = [5, 10, 20, 30, 40, 50, 60, 70]
+        reward_points = [
+            5,10,20,30,40,50,60,70,
+            80,90,100,120,140,160
+        ]
 
         if st.session_state.total_correct in reward_points:
             if st.session_state.total_correct == 5:
