@@ -50,6 +50,26 @@ mode = st.selectbox(
     ["きほん", "くり上がり・くり下がり", "九九", "にがて復習"]
 )
 
+#テンキーをCSSで表示
+st.markdown(
+    """
+    <style>
+    div[data-testid="column"] {
+        width: calc(33.3333% - 1rem) !important;
+        flex: 1 1 calc(33.3333% - 1rem) !important;
+        min-width: calc(33.3333% - 1rem) !important;
+    }
+
+    div.stButton > button {
+        width: 100%;
+        height: 56px;
+        font-size: 22px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 #ごほうび一覧
 reward_list = {
     "normal": {
