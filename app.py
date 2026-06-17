@@ -25,8 +25,6 @@ if "mistakes" not in st.session_state:
     st.session_state.mistakes = []
 
 #テンキー用
-if "answer_text" not in st.session_state:
-    st.session_state.answer_text = ""
 if "message" not in st.session_state:
     st.session_state.message = ""
 
@@ -48,32 +46,6 @@ st.caption("🐼 パンダをあつめながら けいさんれんしゅう！")
 mode = st.selectbox(
     "れんしゅうする計算をえらんでね",
     ["きほん", "くり上がり・くり下がり", "九九", "にがて復習"]
-)
-
-#テンキーをCSSで表示
-st.markdown(
-    """
-    <style>
-    div[data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 0.5rem !important;
-    }
-
-    div[data-testid="column"] {
-        flex: 1 1 0 !important;
-        width: 33.333% !important;
-        min-width: 0 !important;
-    }
-
-    div.stButton > button {
-        width: 100% !important;
-        height: 56px;
-        font-size: 22px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
 )
 
 
@@ -280,45 +252,14 @@ st.header(st.session_state.question)
 
 
 #回答判定
-answer_text = st.text_input(
+answer_value = st.number_input(
     "こたえをいれてね",
-    st.session_state.answer_text,
+    min_value=0,
+    step=1,
+    value=None,
+    placeholder="こたえ",
     key=f"answer_{st.session_state.input_key}"
 )
-
-#テンキー
-def add_number(num):
-    st.session_state.answer_text += num
-    st.session_state.input_key += 1
-
-def clear_answer():
-    st.session_state.answer_text = ""
-    st.session_state.input_key += 1
-
-def backspace_answer():
-    st.session_state.answer_text = st.session_state.answer_text[:-1]
-    st.session_state.input_key += 1
-
-
-keypad = [
-    ["1", "2", "3"],
-    ["4", "5", "6"],
-    ["7", "8", "9"],
-    ["C", "0", "←"],
-]
-
-for row_index, row in enumerate(keypad):
-    cols = st.columns(3)
-    for col_index, label in enumerate(row):
-        with cols[col_index]:
-            if st.button(label, key=f"btn_{row_index}_{col_index}", use_container_width=True):
-                if label == "C":
-                    clear_answer()
-                elif label == "←":
-                    backspace_answer()
-                else:
-                    add_number(label)
-                st.rerun()
 
 button_clicked = st.button(
     "こたえる",
@@ -329,11 +270,11 @@ button_clicked = st.button(
 feedback_area = st.empty()
 
 if button_clicked:
-    try:
-        answer = int(st.session_state.answer_text)
-    except ValueError:
+    if answer_value is None:
         st.session_state.message = "すうじをいれてね！"
         st.rerun()
+
+    answer = int(answer_value)
 
     if answer == st.session_state.correct_answer:
         st.session_state.total_correct += 1
@@ -382,7 +323,6 @@ if button_clicked:
             st.session_state.show_balloons = True
 
         # 正解後の後処理
-        st.session_state.answer_text = ""
         st.session_state.input_key += 1
         st.session_state.message = "せいかい！🐼"
         st.session_state.question, st.session_state.correct_answer = make_question(mode)
@@ -474,7 +414,6 @@ if st.button("🔄 はじめから"):
     st.session_state.total_correct = 0
     st.session_state.question, st.session_state.correct_answer = make_question(mode)
     st.session_state.input_key += 1
-    st.session_state.answer_text = ""
     st.session_state.owned_rewards = []
     st.session_state.new_reward = None
     st.session_state.swat_unlocked = False
