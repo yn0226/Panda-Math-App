@@ -1,5 +1,9 @@
 import streamlit as st
 import random
+import json
+import os
+
+SAVE_FILE = "save_data.json"
 
 #初期化---------
 #総正解数
@@ -16,6 +20,10 @@ if "reward_shown" not in st.session_state:
 if "show_balloons" not in st.session_state:
     st.session_state.show_balloons = False
 
+#コンプリート表示
+if "complete_shown" not in st.session_state:
+    st.session_state.complete_shown = False
+
 # 獲得した瞬間だけ表示するパンダ
 if "new_reward" not in st.session_state:
     st.session_state.new_reward = None
@@ -31,9 +39,42 @@ if "message" not in st.session_state:
 #パンダランダム取得用
 if "owned_rewards" not in st.session_state:
     st.session_state.owned_rewards = []
-if "swat_unlocked" not in st.session_state:
-    st.session_state.swat_unlocked = False
 
+# シークレットパンダ所持一覧
+if "owned_secret_rewards" not in st.session_state:
+    st.session_state.owned_secret_rewards = []
+
+# 保存するデータ-----------
+def get_save_data():
+    return {
+        "total_correct": st.session_state.total_correct,
+        "owned_rewards": st.session_state.owned_rewards,
+        "owned_secret_rewards": st.session_state.owned_secret_rewards,
+        "mistakes": st.session_state.mistakes
+    }
+
+def save_game():
+    with open(SAVE_FILE, "w", encoding="utf-8") as f:
+        json.dump(get_save_data(), f, ensure_ascii=False, indent=2)
+
+def load_game():
+    if not os.path.exists(SAVE_FILE):
+        return False
+
+    with open(SAVE_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    st.session_state.total_correct = data.get("total_correct", 0)
+    st.session_state.owned_rewards = data.get("owned_rewards", [])
+    st.session_state.owned_secret_rewards = data.get("owned_secret_rewards", [])
+    st.session_state.mistakes = data.get("mistakes", [])
+
+    st.session_state.new_reward = None
+    st.session_state.show_balloons = False
+    st.session_state.message = "つづきから はじめたよ！"
+    st.session_state.input_key += 1
+
+    return True
 
 #タイトル
 #st.title("🐼 パンダけいさんランド 🐼")
@@ -42,6 +83,27 @@ st.image(
     use_container_width=True
 )
 st.caption("🐼 パンダをあつめながら けいさんれんしゅう！")
+
+st.caption("💾 あそんだきろくは じどうでほぞんされるよ")
+
+if os.path.exists(SAVE_FILE):
+    st.caption("📂 つづきから あそべるよ")
+
+# セーブ・ロードボタン
+save_col, load_col = st.columns(2)
+
+with save_col:
+    if st.button("💾 きろくを のこす", use_container_width=True):
+        save_game()
+        st.success("きろくを のこしたよ！")
+
+with load_col:
+    if st.button("📂 つづきから あそぶ", use_container_width=True):
+        if load_game():
+            st.rerun()
+        else:
+            st.warning("まだ きろくが ないよ！")
+
 
 mode = st.selectbox(
     "れんしゅうする計算をえらんでね",
@@ -113,6 +175,14 @@ secret_reward_list = {
     "swat": {
         "name": "スワットパンダ",
         "image": "images/swat_panda.png"
+    },
+    "ninja": {
+        "name": "忍者パンダ",
+        "image": "images/ninja_panda.png"
+    },
+    "forensics": {
+        "name": "鑑識パンダ",
+        "image": "images/forensics_panda.png"
     }
 }
 
@@ -289,11 +359,18 @@ if button_clicked:
             if solved_mistake in st.session_state.mistakes:
                 st.session_state.mistakes.remove(solved_mistake)
             
-            #にがて復習クリア時にSWATパンダ開放
-            if len(st.session_state.mistakes) == 0 and not st.session_state.swat_unlocked:
-                st.session_state.swat_unlocked = True
-                st.session_state.new_reward = "swat"
-                st.session_state.show_balloons = True
+            # にがて復習クリア時にシークレットパンダをランダム開放
+            if len(st.session_state.mistakes) == 0:
+                secret_candidates = [
+                    key for key in secret_reward_list.keys()
+                    if key not in st.session_state.owned_secret_rewards
+                ]
+
+                if len(secret_candidates) > 0:
+                    secret_key = random.choice(secret_candidates)
+                    st.session_state.owned_secret_rewards.append(secret_key)
+                    st.session_state.new_reward = secret_key
+                    st.session_state.show_balloons = True
 
         # 正解時のごほうび判定
         reward_points = [
@@ -326,7 +403,7 @@ if button_clicked:
         st.session_state.input_key += 1
         st.session_state.message = "せいかい！🐼"
         st.session_state.question, st.session_state.correct_answer = make_question(mode)
-
+        save_game()
         st.rerun()
 
     else:
@@ -339,6 +416,7 @@ if button_clicked:
 
         if mistake not in st.session_state.mistakes:
             st.session_state.mistakes.append(mistake)
+        save_game()
 
 if st.session_state.message == "せいかい！🐼":
     feedback_area.success("せいかい！🐼")
@@ -350,19 +428,35 @@ elif st.session_state.message == "もういちど！":
 elif st.session_state.message == "すうじをいれてね！":
     feedback_area.warning("すうじをいれてね！")
 
+elif st.session_state.message == "つづきから はじめたよ！":
+    feedback_area.success("つづきから はじめたよ！")
+    st.session_state.message = ""
+
 
 
 
 
 #パンダ獲得数表示
-owned_count = len(st.session_state.owned_rewards)
+owned_count = (
+    len(st.session_state.owned_rewards)
+    + len(st.session_state.owned_secret_rewards)
+)
 
-if st.session_state.swat_unlocked:
-    owned_count += 1
+total_pandas = len(reward_list) + len(secret_reward_list)
+
+#コンプリート確認
+is_complete = owned_count == total_pandas
+if is_complete and not st.session_state.complete_shown:
+    st.balloons()
+    st.snow()
+    st.session_state.complete_shown = True
 
 st.subheader(
-    f"🐼 パンダずかん ({owned_count}/15)"
+    f"🐼 パンダずかん ({owned_count}/{total_pandas})"
 )
+
+if is_complete:
+    st.success("🎉 パンダずかん コンプリート！きみはパンダマスター！🐼")
 
 cols = st.columns(3)
 
@@ -382,21 +476,20 @@ for i, (key, reward) in enumerate(reward_list.items()):
 # シークレット枠
 st.subheader("🔒 シークレットパンダ")
 
-left, center, right = st.columns([1,1,1])
+secret_cols = st.columns(3)
 
-with center:
-    with st.container(border=True):
+for i, (key, reward) in enumerate(secret_reward_list.items()):
+    col = secret_cols[i]
 
-        if st.session_state.swat_unlocked:
-            reward = secret_reward_list["swat"]
+    with col:
+        with st.container(border=True):
+            unlocked = key in st.session_state.owned_secret_rewards
 
-            st.image(
-                reward["image"],
-                use_container_width=True
-            )
-            st.write(f"✅ {reward['name']}")
-        else:
-            st.write("⬜ ？？？？")
+            if unlocked:
+                st.image(reward["image"], use_container_width=True)
+                st.write(f"✅ {reward['name']}")
+            else:
+                st.write("⬜ ？？？？")
 
 
 #不正解表示
@@ -416,6 +509,9 @@ if st.button("🔄 はじめから"):
     st.session_state.input_key += 1
     st.session_state.owned_rewards = []
     st.session_state.new_reward = None
-    st.session_state.swat_unlocked = False
+    st.session_state.owned_secret_rewards = []
     st.session_state.mistakes = []
+    st.session_state.complete_shown = False
+    
+    save_game()
     st.rerun()
