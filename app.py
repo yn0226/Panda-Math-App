@@ -2,6 +2,7 @@ import streamlit as st
 import random
 import json
 import os
+from datetime import datetime
 
 SAVE_FILE = "save_data.json"
 
@@ -44,18 +45,37 @@ if "owned_rewards" not in st.session_state:
 if "owned_secret_rewards" not in st.session_state:
     st.session_state.owned_secret_rewards = []
 
+#日付保存用
+if "saved_at" not in st.session_state:
+    st.session_state.saved_at = ""
+
+#モードごとの正答数表示
+if "mode_correct_counts" not in st.session_state:
+    st.session_state.mode_correct_counts = {
+        "きほん": 0,
+        "くり上がり・くり下がり": 0,
+        "九九": 0,
+        "にがて復習": 0
+    }
+
 # 保存するデータ-----------
 def get_save_data():
     return {
         "total_correct": st.session_state.total_correct,
         "owned_rewards": st.session_state.owned_rewards,
         "owned_secret_rewards": st.session_state.owned_secret_rewards,
-        "mistakes": st.session_state.mistakes
+        "mistakes": st.session_state.mistakes,
+        "saved_at": datetime.now().strftime("%Y/%m/%d %H:%M"),
+        "mode_correct_counts": st.session_state.mode_correct_counts
     }
 
 def save_game():
+    save_data = get_save_data()
+
     with open(SAVE_FILE, "w", encoding="utf-8") as f:
-        json.dump(get_save_data(), f, ensure_ascii=False, indent=2)
+        json.dump(save_data, f, ensure_ascii=False, indent=2)
+
+    st.session_state.saved_at = save_data["saved_at"]
 
 def load_game():
     if not os.path.exists(SAVE_FILE):
@@ -68,6 +88,16 @@ def load_game():
     st.session_state.owned_rewards = data.get("owned_rewards", [])
     st.session_state.owned_secret_rewards = data.get("owned_secret_rewards", [])
     st.session_state.mistakes = data.get("mistakes", [])
+    st.session_state.saved_at = data.get("saved_at", "")
+    st.session_state.mode_correct_counts = data.get(
+    "mode_correct_counts",
+    {
+        "きほん": 0,
+        "くり上がり・くり下がり": 0,
+        "九九": 0,
+        "にがて復習": 0
+    }
+)
 
     st.session_state.new_reward = None
     st.session_state.show_balloons = False
@@ -85,6 +115,8 @@ st.image(
 st.caption("🐼 パンダをあつめながら けいさんれんしゅう！")
 
 st.caption("💾 あそんだきろくは じどうでほぞんされるよ")
+if st.session_state.saved_at:
+    st.caption(f"さいごのきろく：{st.session_state.saved_at}")
 
 if os.path.exists(SAVE_FILE):
     st.caption("📂 つづきから あそべるよ")
@@ -190,6 +222,13 @@ secret_reward_list = {
 # 正解数表示
 st.subheader(
     f"🐼 パンダポイント：{st.session_state.total_correct}"
+)
+st.caption("📘 れんしゅうきろく")
+st.caption(
+    f"きほん：{st.session_state.mode_correct_counts['きほん']}もん / "
+    f"くり上がり・くり下がり：{st.session_state.mode_correct_counts['くり上がり・くり下がり']}もん / "
+    f"九九：{st.session_state.mode_correct_counts['九九']}もん / "
+    f"にがて復習：{st.session_state.mode_correct_counts['にがて復習']}もん"
 )
 
 
@@ -348,6 +387,7 @@ if button_clicked:
 
     if answer == st.session_state.correct_answer:
         st.session_state.total_correct += 1
+        st.session_state.mode_correct_counts[mode] += 1
 
         # にがて復習で正解したら、にがて問題から消す
         if mode == "にがて復習":
