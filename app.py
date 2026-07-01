@@ -236,8 +236,8 @@ st.caption(
     f"きほん：{st.session_state.mode_correct_counts['きほん']}もん / "
     f"くり上がり・くり下がり：{st.session_state.mode_correct_counts['くり上がり・くり下がり']}もん / "
     f"九九：{st.session_state.mode_correct_counts['九九']}もん / "
-    f"わりざん（あまりなし）：{st.session_state.mode_correct_counts['九九']}もん / "
-    f"わりざん（あまりあり）：{st.session_state.mode_correct_counts['九九']}もん / "
+    f"わりざん（あまりなし）：{st.session_state.mode_correct_counts['わりざん（あまりなし）']}もん / "
+    f"わりざん（あまりあり）：{st.session_state.mode_correct_counts['わりざん（あまりあり）']}もん / "
     f"にがて復習：{st.session_state.mode_correct_counts['にがて復習']}もん"
 )
 
