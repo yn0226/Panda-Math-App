@@ -367,14 +367,39 @@ st.header(st.session_state.question)
 
 
 #回答判定
-answer_value = st.number_input(
-    "こたえをいれてね",
-    min_value=0,
-    step=1,
-    value=None,
-    placeholder="こたえ",
-    key=f"answer_{st.session_state.input_key}"
-)
+if mode == "わりざん（あまりあり）":
+    col1, col2 = st.columns(2)
+
+    with col1:
+        answer_value = st.number_input(
+            "こたえをいれてね",
+            min_value=0,
+            step=1,
+            value=None,
+            placeholder="こたえ",
+            key=f"answer_{st.session_state.input_key}"
+        )
+
+    with col2:
+        remainder_value = st.number_input(
+            "あまり",
+            min_value=0,
+            step=1,
+            value=None,
+            placeholder="あまり",
+            key=f"remainder_{st.session_state.input_key}"
+        )
+
+else:
+    answer_value = st.number_input(
+        "こたえをいれてね",
+        min_value=0,
+        step=1,
+        value=None,
+        placeholder="こたえ",
+        key=f"answer_{st.session_state.input_key}"
+    )
+    remainder_value = None
 
 button_clicked = st.button(
     "こたえる",
