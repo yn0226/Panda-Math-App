@@ -1,16 +1,19 @@
 {
-  "total_correct": 10,
+  "total_correct": 5,
   "owned_rewards": [
-    "normal",
-    "lesser_costume"
+    "normal"
   ],
-  "owned_secret_rewards": [],
+  "owned_secret_rewards": [
+    "forensics"
+  ],
   "mistakes": [],
-  "saved_at": "2026/06/23 14:32",
+  "saved_at": "2026/07/01 14:34",
   "mode_correct_counts": {
-    "きほん": 10,
+    "きほん": 0,
     "くり上がり・くり下がり": 0,
     "九九": 0,
-    "にがて復習": 0
+    "わりざん（あまりなし）": 0,
+    "わりざん（あまりあり）": 2,
+    "にがて復習": 3
   }
 }

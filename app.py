@@ -60,6 +60,10 @@ if "mode_correct_counts" not in st.session_state:
         "にがて復習": 0
     }
 
+#わりざん（あまりなし）用
+if "correct_remainder" not in st.session_state:
+    st.session_state.correct_remainder = None
+
 # 保存するデータ-----------
 def get_save_data():
     return {
@@ -247,6 +251,9 @@ if st.session_state.show_balloons:
 #問題
 def make_question(mode):
 
+    #あまりは初期値なし（あまりありモードでだけ設定）
+    st.session_state.correct_remainder = None
+
     if mode == "きほん":
         op = random.choice(["+", "-"])
 
@@ -284,8 +291,34 @@ def make_question(mode):
             a = tens * 10 + ones
 
             question = f"{a} - {b} = ?"
-            correct_answer = a - b
+            correct_answer = a - b    
 
+    elif mode == "九九":
+        a = random.randint(1, 9)
+        b = random.randint(1, 9)
+        question = f"{a} × {b} = ?"
+        correct_answer = a * b
+
+    elif mode == "わりざん（あまりなし）":
+        divisor = random.randint(2, 9)
+        quotient = random.randint(1, 9)
+
+        dividend = divisor * quotient
+
+        question = f"{dividend} ÷ {divisor} = ?"
+        correct_answer = quotient
+
+    elif mode == "わりざん（あまりあり）":
+        divisor = random.randint(2, 9)
+        quotient = random.randint(1, 9)
+        remainder = random.randint(1, divisor - 1)
+
+        dividend = divisor * quotient + remainder
+
+        question = f"{dividend} ÷ {divisor} = ?"
+        correct_answer = quotient
+        st.session_state.correct_remainder = remainder
+        
     elif mode == "にがて復習":
         if len(st.session_state.mistakes) == 0:
             question = "にがて問題はまだないよ！"
@@ -294,12 +327,7 @@ def make_question(mode):
             mistake = random.choice(st.session_state.mistakes)
             question = mistake["question"]
             correct_answer = mistake["answer"]
-
-    else:
-        a = random.randint(1, 9)
-        b = random.randint(1, 9)
-        question = f"{a} × {b} = ?"
-        correct_answer = a * b
+            st.session_state.correct_remainder = mistake.get("remainder")
 
     return question, correct_answer
 
@@ -366,8 +394,8 @@ st.header(st.session_state.question)
 #st.header(question)
 
 
-#回答判定
-if mode == "わりざん（あまりあり）":
+#回答入力欄
+if st.session_state.correct_remainder is not None:
     col1, col2 = st.columns(2)
 
     with col1:
@@ -416,7 +444,18 @@ if button_clicked:
 
     answer = int(answer_value)
 
-    if answer == st.session_state.correct_answer:
+    #正解判定
+    if mode == "わりざん（あまりあり）":
+        is_correct = (
+            answer == st.session_state.correct_answer
+            and remainder_value == st.session_state.correct_remainder
+        )
+    else:
+        is_correct = (
+            answer == st.session_state.correct_answer
+        )
+
+    if is_correct:
         st.session_state.total_correct += 1
         st.session_state.mode_correct_counts[mode] += 1
 
@@ -426,6 +465,9 @@ if button_clicked:
                 "question": st.session_state.question,
                 "answer": st.session_state.correct_answer
             }
+            #あまりありの時
+            if st.session_state.correct_remainder is not None:
+                solved_mistake["remainder"] = st.session_state.correct_remainder
 
             if solved_mistake in st.session_state.mistakes:
                 st.session_state.mistakes.remove(solved_mistake)
@@ -484,6 +526,10 @@ if button_clicked:
             "question": st.session_state.question,
             "answer": st.session_state.correct_answer
         }
+
+        #あまりありの時
+        if st.session_state.correct_remainder is not None:
+            mistake["remainder"] = st.session_state.correct_remainder
 
         if mistake not in st.session_state.mistakes:
             st.session_state.mistakes.append(mistake)
