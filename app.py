@@ -55,6 +55,8 @@ if "mode_correct_counts" not in st.session_state:
         "きほん": 0,
         "くり上がり・くり下がり": 0,
         "九九": 0,
+        "わりざん（あまりなし）": 0,
+        "わりざん（あまりあり）": 0,
         "にがて復習": 0
     }
 
@@ -95,6 +97,8 @@ def load_game():
         "きほん": 0,
         "くり上がり・くり下がり": 0,
         "九九": 0,
+        "わりざん（あまりなし）": 0,
+        "わりざん（あまりあり）": 0,
         "にがて復習": 0
     }
 )
@@ -139,7 +143,7 @@ with load_col:
 
 mode = st.selectbox(
     "れんしゅうする計算をえらんでね",
-    ["きほん", "くり上がり・くり下がり", "九九", "にがて復習"]
+    ["きほん", "くり上がり・くり下がり", "九九",  "わりざん（あまりなし）", "わりざん（あまりあり）", "にがて復習"]
 )
 
 
@@ -228,6 +232,8 @@ st.caption(
     f"きほん：{st.session_state.mode_correct_counts['きほん']}もん / "
     f"くり上がり・くり下がり：{st.session_state.mode_correct_counts['くり上がり・くり下がり']}もん / "
     f"九九：{st.session_state.mode_correct_counts['九九']}もん / "
+    f"わりざん（あまりなし）：{st.session_state.mode_correct_counts['九九']}もん / "
+    f"わりざん（あまりあり）：{st.session_state.mode_correct_counts['九九']}もん / "
     f"にがて復習：{st.session_state.mode_correct_counts['にがて復習']}もん"
 )
 
